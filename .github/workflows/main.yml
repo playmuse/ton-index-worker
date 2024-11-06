@@ -8,7 +8,7 @@ on:
 jobs:
   # Job to build the TON Index Worker binary
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout repository

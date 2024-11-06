@@ -20,7 +20,7 @@ jobs:
     
     - name: Install CMake < 3.30
       run: |
-        wget -qO- https://github.com/Kitware/CMake/releases/download/v3.29.6/cmake-3.29.6-linux-x86_64.sh | sudo bash
+        wget -qO- https://github.com/Kitware/CMake/releases/download/v3.29.6/cmake-3.29.6-linux-x86_64.sh | sudo bash -x -c "yes | ./cmake-3.29.6-linux-x86_64.sh"
 
     - name: Set up build environment
       run: |

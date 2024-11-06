@@ -1,0 +1,54 @@
+name: CI/CD Pipeline for TON Index Worker
+
+on:
+  push:
+    branches:
+      - main # Trigger the workflow on push to the main branch
+
+jobs:
+  # Job to build the TON Index Worker binary
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up build environment
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y build-essential cmake clang openssl libssl-dev zlib1g-dev gperf wget git curl libreadline-dev ccache libmicrohttpd-dev pkg-config libsecp256k1-dev libsodium-dev python3-dev libpq-dev ninja-build
+
+    - name: Build TON index worker binary
+      run: |
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release -GNinja ..
+        ninja -j$(nproc) ton-index-postgres-v2
+
+    - name: Install TON index worker binary
+      run: |
+        sudo cmake --install .
+        
+    - name: Increase file descriptor limit
+      run: ulimit -n 1000000
+
+  # Job to build Docker image and push to GitHub Packages
+  dockerize:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Log in to GitHub Container Registry
+      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Build Docker image
+      run: |
+        docker build -t ghcr.io/${{ github.repository_owner }}/ton-index-worker:latest .
+
+    - name: Push Docker image to GitHub Packages
+      run: |
+        docker push ghcr.io/${{ github.repository_owner }}/ton-index-worker:latest
